@@ -166,9 +166,9 @@ Vector &Vector::operator-=(const Vector &rhs)
         return v;
     }else
     {
-        for(size_t i = 0; i < length; i++)
+        for(size_t i = 0; i < rhs.length; i++)
         {
-            v.vector[i] -= this->vector[i];
+            v.vector[i] -= rhs.vector[i];
         }
     }
     return v;
@@ -241,14 +241,14 @@ Vector &Vector::operator*=(double k)
     }
     return v;
 }
+
 Vector &Vector::operator/=(double k)
 {
-    Vector v(length);
     for(size_t i = 0; i < length; i++)
     {
-        v.vector[i] = this->vector[i] / k;
+        this->vector[i] = (this->vector[i]) / k;
     }
-    return v;
+    return *this;
 }
 
 Vector Vector::operator/(double k) const
@@ -256,7 +256,7 @@ Vector Vector::operator/(double k) const
     Vector v(length);
     for(size_t i = 0; i < length; i++)
     {
-        v[i] = vector[i] / k;
+        v.vector[i] = vector[i] / k;
     }
     return v;
 }
