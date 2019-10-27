@@ -2,14 +2,20 @@
 
 using namespace mat_vec;
 
-Matrix::Matrix(size_t size, double value):wigth(size), higth(size), matrix(new double*[size])
+Matrix::Matrix(size_t size, double value):col(size), row(size), matrix(new double*[size])
 {
-    for(size_t i = 0; i < size; i++)
+    if(size == 0)
     {
-        matrix[i] = new double[size];
-        for(size_t j = 0; j < size; j++)
+        matrix = nullptr;
+    }else
+    {
+        for(size_t i = 0; i < size; i++)
         {
-            matrix[i][j] = value;
+            matrix[i] = new double[size];
+            for(size_t j = 0; j < size; j++)
+            {
+                matrix[i][j] = value;
+            }
         }
     }
 }
@@ -30,7 +36,7 @@ Matrix Matrix::eye(size_t size)
     return m;
 }
 
-Matrix::Matrix(size_t rows, size_t cols, double value):higth(rows), wigth(cols), matrix(new double*[rows])
+Matrix::Matrix(size_t rows, size_t cols, double value):row(rows), col(cols), matrix(new double*[rows])
 {
     for(size_t i = 0; i < rows; i++)
     {
@@ -45,26 +51,31 @@ Matrix::Matrix(size_t rows, size_t cols, double value):higth(rows), wigth(cols),
 Matrix::Matrix(const Matrix &src)
 {
     std::pair<size_t, size_t> hw = src.shape();
-    higth = hw.first;
-    wigth = hw.second;
-    matrix = new double*[higth];
-    for(size_t i = 0; i < higth; i++)
+    row = hw.first;
+    col = hw.second;
+    matrix = new double*[row];
+    for(size_t i = 0; i < row; i++)
     {
-        matrix[i] = new double[wigth];
-        for(size_t j = 0; j < wigth; j++)
+        matrix[i] = new double[col];
+        for(size_t j = 0; j < col; j++)
         {
-            matrix[i][j] = src.get(i, j);
+            matrix[i][j] = src.matrix[i][j];
         }
     }
 }
 
 Matrix::~Matrix()
 {
-    for(size_t i = 0; i < higth; i++)
+    for(size_t i = 0; i < row; i++)
     {
         delete []matrix[i];
     }
     delete []matrix;
+}
+
+double Matrix::get(size_t row, size_t col)
+{
+    return matrix[row][col];
 }
 
 double Matrix::get(size_t row, size_t col) const
@@ -72,35 +83,35 @@ double Matrix::get(size_t row, size_t col) const
     return matrix[row][col];
 }
 
-double Matrix::get(size_t row, size_t col, double k) const
+void Matrix::set(size_t row, size_t col, double k)
 {
-    return matrix[row][col] = k;
+    matrix[row][col] = k;
 }
 
 std::pair<size_t, size_t> Matrix::shape() const
 {
     std::pair<size_t, size_t> hw;
-    hw.first = higth;
-    hw.second = wigth;
+    hw.first = row;
+    hw.second = col;
     return hw;
 }
 
 Matrix &Matrix::operator+=(const Matrix &rhs)
 {
     std::pair<size_t, size_t> hw = rhs.shape();
-    if(higth != hw.first && wigth != hw.second)
+    if(row != hw.first && col != hw.second)
     {
         Matrix k(0, 0, 0);
         std::cout << "Опеация невозможна!" << std::endl;
         return k;
     }
 
-    Matrix m(higth, wigth, 0);
-    for(size_t i = 0; i < higth; i++)
+    Matrix m(row, col, 0);
+    for(size_t i = 0; i < row; i++)
     {
-        for(size_t j = 0; j < wigth; j++)
+        for(size_t j = 0; j < col; j++)
         {
-            matrix[i][j] += rhs.get(i, j);
+            matrix[i][j] += rhs.matrix[i][j];
             m.matrix[i][j] = matrix[i][j];
         }
     }
@@ -110,20 +121,19 @@ Matrix &Matrix::operator+=(const Matrix &rhs)
 Matrix Matrix::operator+(const Matrix &rhs) const
 {
     std::pair<size_t, size_t> hw = rhs.shape();
-    if(higth != hw.first && wigth != hw.second)
+    if(row != hw.first && col != hw.second)
     {
         Matrix k(0, 0, 0);
         std::cout << "Опеация невозможна!" << std::endl;
         return k;
     }
 
-    Matrix m(higth, wigth, 0);
-    for(size_t i = 0; i < higth; i++)
+    Matrix m(row, col, 0);
+    for(size_t i = 0; i < row; i++)
     {
-        for(size_t j = 0; j < wigth; j++)
+        for(size_t j = 0; j < col; j++)
         {
-            matrix[i][j] += rhs.get(i, j);
-            m.matrix[i][j] = matrix[i][j];
+            m.matrix[i][j] = matrix[i][j] + rhs.matrix[i][j];
         }
     }
     return m;
@@ -132,20 +142,19 @@ Matrix Matrix::operator+(const Matrix &rhs) const
 Matrix Matrix::operator-(const Matrix &rhs) const
 {
     std::pair<size_t, size_t> hw = rhs.shape();
-    if(higth != hw.first && wigth != hw.second)
+    if(row != hw.first && col != hw.second)
     {
         Matrix k(0, 0, 0);
         std::cout << "Опеация невозможна!" << std::endl;
         return k;
     }
 
-    Matrix m(higth, wigth, 0);
-    for(size_t i = 0; i < higth; i++)
+    Matrix m(row, col, 0);
+    for(size_t i = 0; i < row; i++)
     {
-        for(size_t j = 0; j < wigth; j++)
+        for(size_t j = 0; j < col; j++)
         {
-            matrix[i][j] -= rhs.get(i, j);
-            m.matrix[i][j] = matrix[i][j];
+            m.matrix[i][j] = matrix[i][j] - rhs.matrix[i][j];
         }
     }
     return m;
@@ -154,20 +163,19 @@ Matrix Matrix::operator-(const Matrix &rhs) const
 Matrix &Matrix::operator-=(const Matrix &rhs)
 {
     std::pair<size_t, size_t> hw = rhs.shape();
-    if(higth != hw.first && wigth != hw.second)
+    if(row != hw.first && col != hw.second)
     {
         Matrix k(0, 0, 0);
         std::cout << "Опеация невозможна!" << std::endl;
         return k;
     }
 
-    Matrix m(higth, wigth, 0);
-    for(size_t i = 0; i < higth; i++)
+    Matrix m(row, col, 0);
+    for(size_t i = 0; i < row; i++)
     {
-        for(size_t j = 0; j < wigth; j++)
+        for(size_t j = 0; j < col; j++)
         {
-            matrix[i][j] -= rhs.get(i, j);
-            m.matrix[i][j] = matrix[i][j];
+            m.matrix[i][j] = matrix[i][j] - rhs.matrix[i][j];
         }
     }
     return m;
@@ -175,13 +183,12 @@ Matrix &Matrix::operator-=(const Matrix &rhs)
 
 Matrix Matrix::operator*(double k) const
 {
-    Matrix m(higth, wigth, 0);
-    for(size_t i = 0; i < higth; i++)
+    Matrix m(row, col, 0);
+    for(size_t i = 0; i < row; i++)
     {
-        for(size_t j = 0; j < wigth; j++)
+        for(size_t j = 0; j < col; j++)
         {
-            matrix[i][j] *= k;
-            m.matrix[i][j] = matrix[i][j];
+            m.matrix[i][j] = matrix[i][j] + k;
         }
     }
     return m;
@@ -189,13 +196,12 @@ Matrix Matrix::operator*(double k) const
 
 Matrix &Matrix::operator*=(double k)
 {
-    Matrix m(higth, wigth, 0);
-    for(size_t i = 0; i < higth; i++)
+    Matrix m(row, col, 0);
+    for(size_t i = 0; i < row; i++)
     {
-        for(size_t j = 0; j < wigth; j++)
+        for(size_t j = 0; j < col; j++)
         {
-            matrix[i][j] *= k;
-            m.matrix[i][j] = matrix[i][j];
+            m.matrix[i][j] = matrix[i][j] - k;
         }
     }
     return m;
@@ -203,13 +209,12 @@ Matrix &Matrix::operator*=(double k)
 
 Matrix Matrix::operator/(double k) const
 {
-    Matrix m(higth, wigth, 0);
-    for(size_t i = 0; i < higth; i++)
+    Matrix m(row, col, 0);
+    for(size_t i = 0; i < row; i++)
     {
-        for(size_t j = 0; j < wigth; j++)
+        for(size_t j = 0; j < col; j++)
         {
-            matrix[i][j] /= k;
-            m.matrix[i][j] = matrix[i][j];
+           m.matrix[i][j] = matrix[i][j] / k;
         }
     }
     return m;
@@ -217,13 +222,12 @@ Matrix Matrix::operator/(double k) const
 
 Matrix &Matrix::operator/=(double k)
 {
-    Matrix m(higth, wigth, 0);
-    for(size_t i = 0; i < higth; i++)
+    Matrix m(row, col, 0);
+    for(size_t i = 0; i < row; i++)
     {
-        for(size_t j = 0; j < wigth; j++)
+        for(size_t j = 0; j < col; j++)
         {
-            matrix[i][j] /= k;
-            m.matrix[i][j] = matrix[i][j];
+            m.matrix[i][j] = matrix[i][j] / k;
         }
     }
     return m;
@@ -232,19 +236,19 @@ Matrix &Matrix::operator/=(double k)
 Matrix Matrix::operator*(const Matrix &rhs) const
 {
     std::pair<size_t, size_t> hw = rhs.shape();
-    if(higth != hw.second)
+    if(row != hw.second)
     {
         Matrix k(0, 0, 0);
         std::cout << "Операция невозможна!" << std::endl;
         return k;
     }
 
-    Matrix m(hw.second, higth, 0);
-    for(size_t i = 0; i < higth; i++)
+    Matrix m(hw.second, row, 0);
+    for(size_t i = 0; i < row; i++)
     {
         for(size_t j = 0; j < hw.second; j++)
         {
-            for(size_t k = 0; k < wigth; k++)
+            for(size_t k = 0; k < col; k++)
             {
                 m.matrix[i][j] += matrix[i][k] * rhs.matrix[k][j];
             }
@@ -256,19 +260,19 @@ Matrix Matrix::operator*(const Matrix &rhs) const
 Matrix &Matrix::operator*=(const Matrix &rhs)
 {
     std::pair<size_t, size_t> hw = rhs.shape();
-    if(higth != hw.second)
+    if(row != hw.second)
     {
         Matrix k(0, 0, 0);
         std::cout << "Операция невозможна!" << std::endl;
         return k;
     }
 
-    Matrix m(hw.second, higth, 0);
-    for(size_t i = 0; i < higth; i++)
+    Matrix m(hw.second, row, 0);
+    for(size_t i = 0; i < row; i++)
     {
         for(size_t j = 0; j < hw.second; j++)
         {
-            for(size_t k = 0; k < wigth; k++)
+            for(size_t k = 0; k < col; k++)
             {
                 m.matrix[i][j] += matrix[i][k] * rhs.matrix[k][j];
             }
@@ -280,14 +284,14 @@ Matrix &Matrix::operator*=(const Matrix &rhs)
 bool Matrix::operator==(const Matrix &rhs) const
 {
     std::pair<size_t, size_t> hw = rhs.shape();
-    if(higth != hw.first || wigth != hw.second)
+    if(row != hw.first || col != hw.second)
     {
         return false;
     }
 
-    for(size_t i = 0; i < higth; i++)
+    for(size_t i = 0; i < row; i++)
     {
-        for(size_t j = 0; j < wigth; j++)
+        for(size_t j = 0; j < col; j++)
         {
             if(matrix[i][j] != rhs.matrix[i][j])
             {
@@ -303,11 +307,11 @@ bool Matrix::operator!=(const Matrix &rhs) const
 {
     std::pair<size_t, size_t> hw = rhs.shape();
     size_t cnt = 0;
-    if(higth == hw.first && wigth == hw.second)
+    if(row == hw.first && col == hw.second)
     {
-        for(size_t i = 0; i < higth; i++)
+        for(size_t i = 0; i < row; i++)
         {
-            for(size_t j = 0; j < wigth; j++)
+            for(size_t j = 0; j < col; j++)
             {
                 if(matrix[i][j] == rhs.matrix[i][j])
                 {
@@ -331,16 +335,16 @@ bool Matrix::operator!=(const Matrix &rhs) const
 Vector Matrix::operator*(const Vector &vec) const
 {
     size_t length = vec.size();
-    if(wigth != length)
+    if(col != length)
     {
         Vector k(0, 0);
         std::cout << "Операция невозможна!" << std::endl;
         return k;
     }
 
-    Vector v(higth, 0);
+    Vector v(row, 0);
     double k = 0;
-    for(size_t i = 0; i < higth; i++)
+    for(size_t i = 0; i < row; i++)
     {
         for(size_t j = 0; j < length; j++)
         {
@@ -354,17 +358,17 @@ Vector Matrix::operator*(const Vector &vec) const
 
 double Matrix::det() const
 {
-    if(higth != wigth)
+    if(row != col)
     {
         std::cout << "Операция невозможна!" << std::endl;
         return 0;
     }
 
-    double **matrix = new double*[higth];
-    for(size_t i = 0; i < higth; i++)
+    double **matrix = new double*[row];
+    for(size_t i = 0; i < row; i++)
     {
-        matrix[i] = new double[higth];
-        for(size_t j = 0; j < higth; j++)
+        matrix[i] = new double[row];
+        for(size_t j = 0; j < row; j++)
         {
             matrix[i][j] = this->matrix[i][j];
         }
@@ -372,10 +376,10 @@ double Matrix::det() const
 
     const double EPS = 1E-9;
     double det = 1;
-    for (size_t i = 0; i < higth; ++i)
+    for (size_t i = 0; i < row; ++i)
     {
         int k = i;
-        for (size_t j = i+1; j < higth; ++j)
+        for (size_t j = i+1; j < row; ++j)
         {
             if (abs(matrix[j][i]) > abs(matrix[k][i]))
             {
@@ -387,7 +391,7 @@ double Matrix::det() const
 		    det = 0;
 		    break;
 	    }
-        for(size_t j = 0; j < higth; j++)
+        for(size_t j = 0; j < row; j++)
         {
             double a = matrix[i][j];
             matrix[i][j] = matrix[k][j];
@@ -398,15 +402,15 @@ double Matrix::det() const
             det = -det;
         }
         det *= matrix[i][i];
-        for (int j = i+1; j < higth; ++j)
+        for (int j = i+1; j < row; ++j)
         {
             matrix[i][j] /= matrix[i][i];
         }
-        for (int j = 0; j < higth; ++j)
+        for (int j = 0; j < row; ++j)
         {
             if (j != i && abs (matrix[j][i]) > EPS)
             {
-                for (int k = i+1; k < higth; ++k)
+                for (int k = i+1; k < row; ++k)
                 {
                     matrix[j][k] -= matrix[i][k] * matrix[j][i];
                 }
@@ -414,7 +418,7 @@ double Matrix::det() const
         }
     }
 
-    for(size_t i = 0; i < higth; i++)
+    for(size_t i = 0; i < row; i++)
     {
         delete []matrix[i];
     }
@@ -425,10 +429,10 @@ double Matrix::det() const
 
 Matrix Matrix::inv() const
 {
-    Matrix m(higth, wigth, 0.0);
-    for(size_t i = 0; i < higth; i++)
+    Matrix m(row, col, 0.0);
+    for(size_t i = 0; i < row; i++)
     {
-        for(size_t j = 0; j < higth; j++)
+        for(size_t j = 0; j < row; j++)
         {
             m.matrix[i][j] = matrix[i][j];
         }
@@ -441,14 +445,14 @@ Matrix Matrix::inv() const
         return k;
     }
     
-    for (size_t i = 0; i< higth; i++)
+    for (size_t i = 0; i< row; i++)
 	{
 		if (matrix[i][i] == 0)
-			for (size_t j = i+1; j< higth; j++)
+			for (size_t j = i+1; j< row; j++)
 			{
 				if (matrix[j][i]==1)
 				{
-					for (size_t k =0; k< 2*higth; k++)
+					for (size_t k =0; k< 2*row; k++)
 					{
 						double c = matrix[j][k];
 						matrix[j][k] = matrix[i][k];
@@ -457,24 +461,24 @@ Matrix Matrix::inv() const
 					break;
 				}
 			}
-		for (size_t k = i+1; k < higth; k++)
+		for (size_t k = i+1; k < row; k++)
 		{
 			if (matrix[k][i] == 1)
 			{
-				for (size_t j = 0; j < 2*higth; j++)
+				for (size_t j = 0; j < 2*row; j++)
 				{
 					matrix[k][j] *= matrix[i][j];
 				}
 			}
 		}
 	}
-    for (size_t i = higth-1; i >= 0; i--)
+    for (size_t i = row-1; i >= 0; i--)
     {
         for (size_t k = i-1; k >= 0; k--)
         {
             if (matrix[k][i] == 1)
             {
-                for (size_t j = 0; j < 2*higth; j++)
+                for (size_t j = 0; j < 2*row; j++)
                 {
                     matrix[k][j] *= matrix[i][j];
                 }
@@ -483,9 +487,9 @@ Matrix Matrix::inv() const
     }
 	
 	//копируем в обратную матрицу В
-	for (size_t i = 0; i < higth; i++)
+	for (size_t i = 0; i < row; i++)
     {
-		for (size_t j = 0, k = higth; j < higth; j++, k++)
+		for (size_t j = 0, k = row; j < row; j++, k++)
         {
             m.matrix[i][j] = matrix[i][k];
         }
@@ -495,23 +499,23 @@ Matrix Matrix::inv() const
 
 Matrix& Matrix::operator=(const mat_vec::Matrix &rhs)
 {
-    for(size_t i = 0; i < higth; i++)
+    for(size_t i = 0; i < row; i++)
     {
         delete []matrix[i];
     }
     delete[] this->matrix;
-    this->higth = rhs.higth;
-    this->wigth = rhs.wigth;
+    this->row = rhs.row;
+    this->col = rhs.col;
 
-    matrix = new double*[higth];
-    for(size_t i = 0; i < higth; i++)
+    matrix = new double*[row];
+    for(size_t i = 0; i < row; i++)
     {
-        matrix[i] = new double[wigth];
+        matrix[i] = new double[col];
     }
 
-    for(size_t i = 0; i < higth; i++)
+    for(size_t i = 0; i < row; i++)
     {
-        for(size_t j = 0; j < wigth; j++)
+        for(size_t j = 0; j < col; j++)
         {
             matrix[i][j] = rhs.matrix[i][j];
         }
@@ -519,38 +523,33 @@ Matrix& Matrix::operator=(const mat_vec::Matrix &rhs)
     return *this;
 }
 
-void Matrix::get(size_t row, size_t col, double k)
-{
-    matrix[row][col] = k;
-}
-
 void Matrix::reshape(size_t rows, size_t cols)
 {
     double *m = new double[rows*cols];
     size_t k = 0;
-    for(size_t i = 0; i < higth; i++)
+    for(size_t i = 0; i < row; i++)
     {
-        for(size_t j = 0; j < wigth; j++)
+        for(size_t j = 0; j < col; j++)
         {
             m[k] = matrix[i][j];
             k++;
         }
     }
-    for(size_t i = 0; i < higth; i++)
+    for(size_t i = 0; i < row; i++)
     {
         delete []matrix[i];
     }
     delete []matrix;
 
-    higth = rows;
-    wigth = cols;
+    row = rows;
+    col = cols;
     k = 0;
 
-    matrix = new double*[higth];
-    for(size_t i = 0; i < higth; i++)
+    matrix = new double*[row];
+    for(size_t i = 0; i < row; i++)
     {
-        matrix[i] = new double[wigth];
-        for(size_t j = 0; j < wigth; j++)
+        matrix[i] = new double[col];
+        for(size_t j = 0; j < col; j++)
         {
             matrix[i][j] = m[k];
             k++;
@@ -560,11 +559,11 @@ void Matrix::reshape(size_t rows, size_t cols)
 
 Matrix Matrix::transposed() const
 {
-    Matrix m(wigth, higth);
-    for(size_t i = 0; i < wigth; i++)
+    Matrix m(col, row);
+    for(size_t i = 0; i < col; i++)
     {
-        m.matrix[i] = new double[higth];
-        for(size_t j = 0; j < higth; j++)
+        m.matrix[i] = new double[row];
+        for(size_t j = 0; j < row; j++)
         {
             m.matrix[i][j] = matrix[j][i];
         }
@@ -575,35 +574,35 @@ Matrix Matrix::transposed() const
 
 void Matrix::transpose()
 {
-    double **m = new double*[wigth]; 
-    for(size_t i = 0; i < wigth; i++)
+    double **m = new double*[col]; 
+    for(size_t i = 0; i < col; i++)
     {
-        m[i] = new double[higth];
-        for(size_t j = 0; j < higth; j++)
+        m[i] = new double[row];
+        for(size_t j = 0; j < row; j++)
         {
             m[i][j] = matrix[j][i];
         }
     }
     
-    for(size_t i = 0; i < higth; i++)
+    for(size_t i = 0; i < row; i++)
     {
         delete []matrix[i];
     }
     delete []matrix;
     
-    double a = higth;
-    higth = wigth;
-    wigth = a;
-    matrix = new double*[higth];
-    for(size_t i = 0; i < higth; i++)
+    double a = row;
+    row = col;
+    col = a;
+    matrix = new double*[row];
+    for(size_t i = 0; i < row; i++)
     {
-        matrix[i] = new double[wigth];
-        for(size_t j = 0; j < wigth; j++)
+        matrix[i] = new double[col];
+        for(size_t j = 0; j < col; j++)
         {
             matrix[i][j] = m[i][j];
         }
     }
-    for(size_t i = 0; i < higth; i++)
+    for(size_t i = 0; i < row; i++)
     {
         delete []m[i];
     }
